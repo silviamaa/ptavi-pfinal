@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE ua2 [
+<!ELEMENT config (account, uaserver, rtpaudio, regproxy, log, audio)>
+<!ELEMENT account EMPTY>
+<!ATTLIST account username CDATA #REQUIRED>
+<!ATTLIST account passwd CDATA #IMPLIED>
+<!ELEMENT uaserver EMPTY>
+<!ATTLIST uaserver ip CDATA #IMPLIED>
+<!ATTLIST uaserver puerto CDATA #REQUIRED>
+<!ELEMENT rtpaudio EMPTY>
+<!ATTLIST rtpaudio puerto CDATA #REQUIRED>
+<!ELEMENT regproxy EMPTY>
+<!ATTLIST regproxy ip CDATA #REQUIRED>
+<!ATTLIST regproxy puerto CDATA #REQUIRED>
+<!ELEMENT log EMPTY>
+<!ATTLIST log path CDATA #REQUIRED>
+<!ELEMENT audio EMPTY>
+<!ATTLIST audio path CDATA #REQUIRED>]>
+
+<ua2>
+  <account username="" passwd=""></account>
+  <uaserver ip="127.0.0.1" puerto=""></uaserver>
+  <rtpaudio puerto=""></rtpaudio>
+  <regproxy ip="127.0.0.1" puerto=""></regproxy>
+  <log path="ua2.txt"></log>
+  <audio path="cancion.mp3"></audio>
+</ua2>
