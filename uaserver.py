@@ -17,13 +17,45 @@ if len(sys.argv) != 4:
              fichero_audio)
 
 
-class EchoHandler(SocketServer.DatagramRequestHandler):
+#Maneja ua.xml
+class ServerHandler(SocketServer.DatagramRequestHandler):
     """
     server class
     """
 
+    def __init__(self):
+        #variables ua.xml
+        self.account_username = ''
+        self.account_passwd = ''
+        self.uaserver_ip = ''
+        self.uaserver_puerto = 0
+        self.rtp_puerto = 0
+        self.regproxy_ip = ''
+        self.regproxy_puerto = 0
+        self.log = ''
+        self.audio = ''
+
+    def startElement(self, name, attrs):
+
+        if name == 'account':
+            self.account_username = attrs.get('username', "")
+            self.account_passwd = attrs.get('passwd', "")
+        elif name == 'uaserver':
+            self.uaserver_ip = attrs.get('ip', "127.0.0.1")
+            self.uaserver_puerto = attrs.get('puerto', "")
+        elif name == 'rtpaudio':
+            self.rtp_puerto = attrs.get('puerto', "")
+        elif name == 'regproxy':
+            self.regproxy_ip = attrs.get('ip', "")
+            self.regproxy_puerto = attrs.get('puerto', "")
+        elif name == 'log':
+            self.log = attrs.get('path', "")
+        elif name == 'audio':
+            self.audio = attrs.get('path', "")
+
+
     def handle(self):
-		client_ip = str(self.client_address[0])
+        client_ip = str(self.client_address[0])
         while 1:
             # Leyendo línea a línea lo que nos envía el cliente
             line = self.rfile.read()
@@ -52,7 +84,14 @@ class EchoHandler(SocketServer.DatagramRequestHandler):
                 print "SIP/2.0 405 Method Not Allowed"
 
 if __name__ == "__main__":
-    # Creamos servidor de eco y escuchamos
+    # Creamos servidor y escuchamos
+
+    # Parser
+    parser = make_parser()
+    cHandler = ClientHandler()
+    parser.setContentHandler(cHandler)
+    parser.parse(open(str(sys.argv[1])))
+
     serv = SocketServer.UDPServer((ip, int(puerto)), EchoHandler)
-    print "Lanzando servidor UDP..."
+    print "Lanzando servidor..."
     serv.serve_forever()
