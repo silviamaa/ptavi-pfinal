@@ -10,27 +10,31 @@ import sys
 from xml.sax import make_parser
 from xml.sax.handler import ContentHandler
 
-#Maneja ua.xml
+
 class ClientHandler(ContentHandler):
 
 
     def __init__(self):
-        #variables ua.xml
-        self.account_username = ''
-        self.account_passwd = ''
-        self.uaserver_ip = ''
+        """
+        Constructor. Inicializamos las variables
+        """
+        self.username = ""
+        self.passwd = ""
+        self.uaserver_ip = ""
         self.uaserver_puerto = 0
         self.rtp_puerto = 0
-        self.regproxy_ip = ''
+        self.regproxy_ip = ""
         self.regproxy_puerto = 0
-        self.log = ''
-        self.audio = ''
+        self.log = ""
+        self.audio = ""
 
     def startElement(self, name, attrs):
-
+		"""
+        Método que se llama cuando se abre una etiqueta
+        """
         if name == 'account':
-            self.account_username = attrs.get('username', "")
-            self.account_passwd = attrs.get('passwd', "")
+            self.username = attrs.get('username', "")
+            self.passwd = attrs.get('passwd', "")
         elif name == 'uaserver':
             self.uaserver_ip = attrs.get('ip', "127.0.0.1")
             self.uaserver_puerto = attrs.get('puerto', "")
