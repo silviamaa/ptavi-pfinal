@@ -6,9 +6,17 @@ Programa cliente que abre un socket a un servidor
 
 import socket
 import sys
+import time
 
 from xml.sax import make_parser
 from xml.sax.handler import ContentHandler
+
+
+def AñadirLog(evento):
+    fichero = open(cHandler.log, 'a')
+    mensaje = str(time.time()) + " " + evento + '\r\n'
+    fichero.write(mensaje)
+    fichero.close()
 
 
 class ClientHandler(ContentHandler):
@@ -29,7 +37,7 @@ class ClientHandler(ContentHandler):
         self.audio = ""
 
     def startElement(self, name, attrs):
-		"""
+        """
         Método que se llama cuando se abre una etiqueta
         """
         if name == 'account':
@@ -61,27 +69,25 @@ if __name__ == "__main__":
 
     #NO MODIFICADO
 
-    # Dirección IP del servidor.
-    METODO = sys.argv[1]
-
-    if len(sys.argv) != 3:
+    if len(sys.argv) != 4:
         sys.exit("Usage: python client.py method receiver@IP:SIPport")
-
-    #Partimos los argumentos
-    z = sys.argv[2].split(":")
-    login = z[-2]
-    a = sys.argv[2].split("@")
-    b = a[1].split(":")
-    IPreceptor = b[-2]
-    puertoSIP = b[-1]
+    #meter error en log
 
     # Contenido que vamos a enviar si es un INVITE o un BYE
-    MENSAJE = METODO + " sip:" + login + " SIP/2.0\r\n"
+    #MENSAJE = METODO + " sip:" + login + " SIP/2.0\r\n"
 
+    METODO = sys.argv[2]
+    IP = cHandler.regproxy_ip
+    PORT = cHandler.regproxy_port
+    IP_PORT = str(IP) + ':' + str(PORT)
     # Creamos el socket, lo configuramos y lo atamos a un servidor/puerto
     my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    my_socket.connect((IPreceptor, int(puertoSIP)))
+    my_socket.connect((IP, int(PORT)))
+
+    if (METODO == "REGISTER"):
+
+        #meter "staring" en log
 
     if (METODO == "INVITE"):
         print "Enviando: " + MENSAJE
@@ -89,12 +95,20 @@ if __name__ == "__main__":
     if (METODO == "BYE"):
         print "Enviando: " + MENSAJE
         my_socket.send(MENSAJE + '\r\n')
+
+    #meter envio en log
+
     #Compruebo que el puerto está abierto
     try:
         data = my_socket.recv(1024)
     except socket.error:
         sys.exit("Error: No server listening at " + IPreceptor + " port " +
                  puertoSIP)
+
+        #meter error en log
+
+    #meter recepcion en log    
+
     if (data == ("SIP/2.0 100 Trying\r\n\r\n" + "SIP/2.0 180 Ringing\r\n\r\n" +
                  "SIP/2.0 200 OK\r\n\r\n")):
         print 'Recibida respuesta INVITE-- \r\n\r\n', data
@@ -103,8 +117,13 @@ if __name__ == "__main__":
         my_socket.send(mensaje_ack + '\r\n')
         data = my_socket.recv(1024)
         print 'Recibida respuesta ACK -- \r\n\r\n', data
+
+        #enviamos audio(RTP)        
+
     if (METODO == "BYE"):
         print 'Recibida respuesta BYE-- \r\n\r\n', data
+
+    #meter envio en log
 
     # Cerramos todo
     my_socket.close()
