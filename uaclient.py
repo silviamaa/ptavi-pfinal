@@ -7,6 +7,7 @@ Programa cliente que abre un socket a un servidor
 import socket
 import sys
 import time
+import os
 
 from xml.sax import make_parser
 from xml.sax.handler import ContentHandler
@@ -67,10 +68,8 @@ if __name__ == "__main__":
     parser.parse(open(str(sys.argv[1])))
 
 
-    #NO MODIFICADO
-
     if len(sys.argv) != 4:
-        sys.exit("Usage: python client.py method receiver@IP:SIPport")
+        sys.exit("Usage: python uaclient.py config method option")
     #meter error en log
 
     # Contenido que vamos a enviar si es un INVITE o un BYE
@@ -86,15 +85,16 @@ if __name__ == "__main__":
     my_socket.connect((IP, int(PORT)))
 
     if (METODO == "REGISTER"):
-
+		EXPIRES = sys.argv[3]
         #meter "staring" en log
 
     if (METODO == "INVITE"):
-        print "Enviando: " + MENSAJE
-        my_socket.send(MENSAJE + '\r\n')
+		LOGIN = str(sys.argv[3])
+        #print "Enviando: " + MENSAJE
+        #my_socket.send(MENSAJE + '\r\n')
     if (METODO == "BYE"):
-        print "Enviando: " + MENSAJE
-        my_socket.send(MENSAJE + '\r\n')
+        #print "Enviando: " + MENSAJE
+        #my_socket.send(MENSAJE + '\r\n')
 
     #meter envio en log
 
@@ -102,28 +102,36 @@ if __name__ == "__main__":
     try:
         data = my_socket.recv(1024)
     except socket.error:
-        sys.exit("Error: No server listening at " + IPreceptor + " port " +
-                 puertoSIP)
+        #meter error en log("Error: No server listening at ")
 
-        #meter error en log
-
-    #meter recepcion en log    
-
-    if (data == ("SIP/2.0 100 Trying\r\n\r\n" + "SIP/2.0 180 Ringing\r\n\r\n" +
-                 "SIP/2.0 200 OK\r\n\r\n")):
+    #meter recepcion en log   
+	
+	if (data == ("SIP/2.0 200 OK\r\n\r\n")):
+		print 'Recibida respuesta REGISTER-- \r\n\r\n', data
+	
+	data = data.split()
+	server_ip = data[13]
+    server_port = data[17]
+    elif (data[2] == "Trying" + data[5] == "Ringing" + data[8] == "OK"):
         print 'Recibida respuesta INVITE-- \r\n\r\n', data
         #Se envía el ACK
-        mensaje_ack = "ACK" + " sip:" + login + " SIP/2.0\r\n"
+        mensaje_ack = "ACK" + " sip:" + LOGIN + " SIP/2.0\r\n"
         my_socket.send(mensaje_ack + '\r\n')
         data = my_socket.recv(1024)
         print 'Recibida respuesta ACK -- \r\n\r\n', data
 
-        #enviamos audio(RTP)        
+        #enviamos audio(RTP)  
+		reproducir = ('mp32rtp -i ' + server_ip + ' -p ' + puerto_server +
+					  ' < ' + cHandler.audio)
+	    print "Listening... ", reproducir
+        os.system(reproducir)
+        print "Se ha terminado de reproducir"     
 
     if (METODO == "BYE"):
+		LOGIN = str(sys.argv[3])
         print 'Recibida respuesta BYE-- \r\n\r\n', data
 
-    #meter envio en log
+   		#meter envio en log
 
     # Cerramos todo
     my_socket.close()
