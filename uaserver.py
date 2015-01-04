@@ -7,18 +7,19 @@ Clase (y programa principal) para un servidor de eco en UDP simple
 import SocketServer
 import sys
 import os
+import time
 
-ip = sys.argv[1]
-puerto = sys.argv[2]
-fichero_audio = sys.argv[3]
+from xml.sax import make_parser
+from xml.sax.handler import ContentHandler
 
-if len(sys.argv) != 2:
-    sys.exit("Usage: python server.py " + ip + " " + puerto + " " +
-             fichero_audio)
-    #meter error en log
+def AñadirLog(evento):
+    fichero = open(cHandler.log, 'a')
+    mensaje = str(time.time()) + " " + evento + '\r\n'
+    fichero.write(mensaje)
+    fichero.close()
 
 
-class ServerHandler(SocketServer.DatagramRequestHandler):
+class ServerHandler(ContentHandler):
     """
     server class
     """
@@ -62,7 +63,7 @@ class ServerHandler(SocketServer.DatagramRequestHandler):
         client_ip = str(self.client_address[0])
         client_port = str(self.client_address[0])
         while 1:
-            # Leyendo línea a línea lo que nos envía el cliente
+            # Leyendo línea a línea lo que nos envía el cliente(desde el proxy)
             line = self.rfile.read()
             print line
             line1 = line.split()
@@ -90,11 +91,11 @@ class ServerHandler(SocketServer.DatagramRequestHandler):
                 self.wfile.write("SIP/2.0 200 OK\r\n\r\n")
                 #meter envio en log
                 #meter "finishing" en log
-            elif len(line1) != 3:
-                print "SIP/2.0 400 Bad Request"
+            elif len(line1) != ("INVITE" or "ACK" or "BYE"):
+                print "SIP/2.0 405 Method Not Allowed"
                 #meter error en log
             else:
-                print "SIP/2.0 405 Method Not Allowed"
+                print "SIP/2.0 400 Bad Request"
                 #meter error en log
 
 if __name__ == "__main__":
@@ -106,7 +107,11 @@ if __name__ == "__main__":
     parser.setContentHandler(cHandler)
     parser.parse(open(str(sys.argv[1])))
 
+    if len(sys.argv) != 2:
+    sys.exit("Usage: python uaserver.py config")
+    #meter error en log
+
     serv = SocketServer.UDPServer((cHandler.uaserver_ip,
-                                   int(cHandler.uaserver_ip)), EchoHandler)
+                                   int(cHandler.uaserver_port)), EchoHandler)
     print "Listening..."
     serv.serve_forever()
