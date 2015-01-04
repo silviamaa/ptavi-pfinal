@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pr>
+  <server name="MiServidorProxy" ip="127.0.0.1" puerto=""></server>
+  <database path="registro_usuarios.txt" passwdpath=""></database>
+  <log path="pr.txt"></log>
+</pr>
