@@ -73,13 +73,19 @@ class ServerHandler(ContentHandler):
             if not line1:
                 break
             if (line1[0] == "INVITE"):
-                self.wfile.write("SIP/2.0 100 Trying\r\n\r\n" +
-                                 "SIP/2.0 180 Ringing\r\n\r\n" +
-                                 "SIP/2.0 200 OK\r\n\r\n")
+                MENSAJE = ("SIP/2.0 100 Trying\r\n\r\n" +
+                           "SIP/2.0 180 Ringing\r\n\r\n" +
+                           "SIP/2.0 200 OK\r\n\r\n")
                 #contenido SDP
-
-                #meter envio en log            
-
+				SDP = 'Content-Type: application/sdp\r\n' + 'v=0' + '\n'
+                SDP += 'o=' + str(cHandler.account_un) + ' '
+                SDP += str(cHandler.uaserver_ip)
+                SDP += '\n' + 's=misesion\n' + 't=0\n' + 'm=audio '
+                SDP += str(cHandler.rtp_port) + ' RTP'
+                self.wfile.write(MENSAJE + SDP)
+                #meter envio en log 
+                envio = ("Send to " + client_ip + client_port + MENSAJE + SDP)
+                MeterLog(envio)           
             elif (line1[0] == "ACK"):
                 #enviamos audio
                 reproducir = ('./mp32rtp -i ' + ip + ' -p ' +
@@ -90,17 +96,24 @@ class ServerHandler(ContentHandler):
             elif (line1[0] == "BYE"):
                 self.wfile.write("SIP/2.0 200 OK\r\n\r\n")
                 #meter envio en log
-                #meter "finishing" en log
+				envio = ("Send to " + client_ip + client_port +
+						 "SIP/2.0 200 OK\r\n\r\n")
+                MeterLog(envio)   
             elif len(line1) != ("INVITE" or "ACK" or "BYE"):
-                print "SIP/2.0 405 Method Not Allowed"
+				print "SIP/2.0 405 Method Not Allowed"
                 #meter error en log
+				error = ("Send to " + client_ip + client_port +
+						 "SIP/2.0 405 Method Not Allowed")
+                MeterLog(error) 
             else:
                 print "SIP/2.0 400 Bad Request"
                 #meter error en log
+				error = ("Send to " + client_ip + client_port +
+						 "SIP/2.0 400 Bad Request")
+                MeterLog(error) 
 
 if __name__ == "__main__":
     # Creamos servidor y escuchamos
-
     # Parser
     parser = make_parser()
     cHandler = ClientHandler()
@@ -108,8 +121,10 @@ if __name__ == "__main__":
     parser.parse(open(str(sys.argv[1])))
 
     if len(sys.argv) != 2:
-    sys.exit("Usage: python uaserver.py config")
-    #meter error en log
+		sys.exit("Usage: python uaserver.py config")
+		#meter error en log
+		error = ("Error: Usage: python uaserver.py config")
+        MeterLog(error)
 
     serv = SocketServer.UDPServer((cHandler.uaserver_ip,
                                    int(cHandler.uaserver_port)), EchoHandler)
