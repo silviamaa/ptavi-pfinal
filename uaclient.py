@@ -73,7 +73,7 @@ if __name__ == "__main__":
         MeterLog(error)
 
     METODO = sys.argv[2]
-    OPCION = SYS.ARGV[3]
+    OPCION = sys.argv[3]
     IP = cHandler.regproxy_ip
     PORT = cHandler.regproxy_port
     IP_PORT = str(IP) + ':' + str(PORT)
@@ -88,8 +88,11 @@ if __name__ == "__main__":
                    'Expires: ' + OPCION)
         print "Enviando: " + MENSAJE
         my_socket.send(MENSAJE + '\r\n')
+		#meter "starting" en log
+		inicio = 'Starting...'
+		MeterLog(inicio)
     elif (METODO == "INVITE"):      
-        SDP = 'Content-Type: application/sdp\r\n' + 'v=0' + '\n'
+        SDP = 'Content-Type: application/sdp\r\n\r\n' + 'v=0' + '\n'
         SDP += 'o=' + str(cHandler.username) + ' '
         SDP += str(cHandler.uaserver_ip)
         SDP += '\n' + 's=misesion\n' + 't=0\n' + 'm=audio '
@@ -115,7 +118,7 @@ if __name__ == "__main__":
         data = my_socket.recv(1024)
     except socket.error:
         #meter error en log("Error: No server listening at ")
-        error = str(time.time()) + 'Error: no server listening at ' + IP_PORT
+        error = ('Error: no server listening at ' + IP_PORT)
         MeterLog(error)
         sys.exit()
     #meter recepcion en log  
@@ -131,7 +134,7 @@ if __name__ == "__main__":
     elif (data[2] == "Trying" + data[5] == "Ringing" + data[8] == "OK"):
         print 'Recibida respuesta INVITE-- \r\n\r\n', data
         #Se envía el ACK
-        mensaje_ack = "ACK" + " sip:" + LOGIN + " SIP/2.0\r\n"
+        mensaje_ack = "ACK" + " sip:" + OPCION + " SIP/2.0\r\n"
         my_socket.send(mensaje_ack + '\r\n')
         #meter envío en log
         envio = 'Send to: ' + IP_PORT + ':' + mensaje_ack + '\r\n'
@@ -141,12 +144,15 @@ if __name__ == "__main__":
                       ' < ' + cHandler.audio)
         print "Listening... ", reproducir
         os.system(reproducir)
-        print "Se ha terminado de reproducir"     
+        print "Se ha terminado de reproducir"  
+		#meter audio en log
+		audio = ('Listening...\r\n' + 'Se ha terminado de reproducir')
+		MeterLog(audio)   
 
     if (METODO == "BYE"):
         print 'Recibida respuesta BYE-- \r\n\r\n', data
            #meter "finishing" en log
-        despedida = 'finishing...'
+        despedida = 'finishing.'
         MeterLog(despedida)
 
     # Cerramos todo
