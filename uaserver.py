@@ -77,14 +77,15 @@ class ServerHandler(ContentHandler):
                            "SIP/2.0 180 Ringing\r\n\r\n" +
                            "SIP/2.0 200 OK\r\n\r\n")
                 #contenido SDP
-				SDP = 'Content-Type: application/sdp\r\n' + 'v=0' + '\n'
+				SDP = 'Content-Type: application/sdp\r\n\r\n' + 'v=0' + '\n'
                 SDP += 'o=' + str(cHandler.account_un) + ' '
                 SDP += str(cHandler.uaserver_ip)
                 SDP += '\n' + 's=misesion\n' + 't=0\n' + 'm=audio '
                 SDP += str(cHandler.rtp_port) + ' RTP'
                 self.wfile.write(MENSAJE + SDP)
                 #meter envio en log 
-                envio = ("Send to " + client_ip + client_port + MENSAJE + SDP)
+                envio = ("Send to " + client_ip + client_port + ':' +
+						 MENSAJE + SDP)
                 MeterLog(envio)           
             elif (line1[0] == "ACK"):
                 #enviamos audio
@@ -93,16 +94,19 @@ class ServerHandler(ContentHandler):
                 print "Listening... ", reproducir
                 os.system(reproducir)
                 print "Se ha terminado de reproducir"
+				#meter audio en log
+				audio = ('Listening...\r\n' + 'Se ha terminado de reproducir')
+				MeterLog(audio)
             elif (line1[0] == "BYE"):
                 self.wfile.write("SIP/2.0 200 OK\r\n\r\n")
                 #meter envio en log
-				envio = ("Send to " + client_ip + client_port +
+				envio = ("Send to " + client_ip + client_port + ':' +
 						 "SIP/2.0 200 OK\r\n\r\n")
                 MeterLog(envio)   
             elif len(line1) != ("INVITE" or "ACK" or "BYE"):
 				print "SIP/2.0 405 Method Not Allowed"
                 #meter error en log
-				error = ("Send to " + client_ip + client_port +
+				error = ("Send to " + client_ip + client_port + ':' +
 						 "SIP/2.0 405 Method Not Allowed")
                 MeterLog(error) 
             else:
@@ -129,4 +133,5 @@ if __name__ == "__main__":
     serv = SocketServer.UDPServer((cHandler.uaserver_ip,
                                    int(cHandler.uaserver_port)), EchoHandler)
     print "Listening..."
+	MeterLog('Listening...')
     serv.serve_forever()
