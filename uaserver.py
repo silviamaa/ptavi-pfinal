@@ -62,6 +62,7 @@ class ServerHandler(ContentHandler):
     def handle(self):
         client_ip = str(self.client_address[0])
         client_port = str(self.client_address[0])
+        IP_PORT = (client_ip) + ':' + (client_port)
         while 1:
             # Leyendo línea a línea lo que nos envía el cliente(desde el proxy)
             line = self.rfile.read()
@@ -77,15 +78,14 @@ class ServerHandler(ContentHandler):
                            "SIP/2.0 180 Ringing\r\n\r\n" +
                            "SIP/2.0 200 OK\r\n\r\n")
                 #contenido SDP
-				SDP = 'Content-Type: application/sdp\r\n\r\n' + 'v=0' + '\n'
+                SDP = 'Content-Type: application/sdp\r\n\r\n' + 'v=0' + '\n'
                 SDP += 'o=' + str(cHandler.account_un) + ' '
                 SDP += str(cHandler.uaserver_ip)
                 SDP += '\n' + 's=misesion\n' + 't=0\n' + 'm=audio '
                 SDP += str(cHandler.rtp_port) + ' RTP'
                 self.wfile.write(MENSAJE + SDP)
                 #meter envio en log 
-                envio = ("Send to " + client_ip + client_port + ':' +
-						 MENSAJE + SDP)
+                envio = ("Send to " + IP_PORT + ':' + MENSAJE + SDP)
                 MeterLog(envio)           
             elif (line1[0] == "ACK"):
                 #enviamos audio
@@ -94,26 +94,24 @@ class ServerHandler(ContentHandler):
                 print "Listening... ", reproducir
                 os.system(reproducir)
                 print "Se ha terminado de reproducir"
-				#meter audio en log
-				audio = ('Listening...\r\n' + 'Se ha terminado de reproducir')
-				MeterLog(audio)
+                #meter audio en log
+                audio = ('Listening...\r\n' + 'Se ha terminado de reproducir')
+                MeterLog(audio)
             elif (line1[0] == "BYE"):
                 self.wfile.write("SIP/2.0 200 OK\r\n\r\n")
                 #meter envio en log
-				envio = ("Send to " + client_ip + client_port + ':' +
-						 "SIP/2.0 200 OK\r\n\r\n")
+                envio = ("Send to " + IP_PORT + ':' + "SIP/2.0 200 OK\r\n\r\n")
                 MeterLog(envio)   
             elif len(line1) != ("INVITE" or "ACK" or "BYE"):
-				print "SIP/2.0 405 Method Not Allowed"
+                print "SIP/2.0 405 Method Not Allowed"
                 #meter error en log
-				error = ("Send to " + client_ip + client_port + ':' +
-						 "SIP/2.0 405 Method Not Allowed")
+                error = ("Send to " + IP_PORT + ':' +
+                         "SIP/2.0 405 Method Not Allowed")
                 MeterLog(error) 
             else:
                 print "SIP/2.0 400 Bad Request"
                 #meter error en log
-				error = ("Send to " + client_ip + client_port +
-						 "SIP/2.0 400 Bad Request")
+                error = ("Send to " + IP_PORT + "SIP/2.0 400 Bad Request")
                 MeterLog(error) 
 
 if __name__ == "__main__":
@@ -125,13 +123,13 @@ if __name__ == "__main__":
     parser.parse(open(str(sys.argv[1])))
 
     if len(sys.argv) != 2:
-		sys.exit("Usage: python uaserver.py config")
-		#meter error en log
-		error = ("Error: Usage: python uaserver.py config")
+        sys.exit("Usage: python uaserver.py config")
+        #meter error en log
+        error = ("Error: Usage: python uaserver.py config")
         MeterLog(error)
 
     serv = SocketServer.UDPServer((cHandler.uaserver_ip,
                                    int(cHandler.uaserver_port)), EchoHandler)
     print "Listening..."
-	MeterLog('Listening...')
+    MeterLog('Listening...')
     serv.serve_forever()
