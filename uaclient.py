@@ -21,7 +21,6 @@ def MeterLog(evento):
 
 class ClientHandler(ContentHandler):
 
-
     def __init__(self):
         """
         Constructor. Inicializamos las variables
@@ -75,36 +74,35 @@ if __name__ == "__main__":
     METODO = sys.argv[2]
     OPCION = sys.argv[3]
     IP = cHandler.regproxy_ip
-    PORT = cHandler.regproxy_port
+    PORT = cHandler.regproxy_puerto
     IP_PORT = str(IP) + ':' + str(PORT)
     # Creamos el socket, lo configuramos y lo atamos a un servidor/puerto
     my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     my_socket.connect((IP, int(PORT)))
 
+    #Defino SDP
+    SDP = 'Content-Type: application/sdp\r\n\r\n' + 'v=0' + '\n'
+    SDP += 'o=' + str(cHandler.username) + ' '
+    SDP += str(cHandler.uaserver_ip)
+    SDP += '\n' + 's=misesion\n' + 't=0\n' + 'm=audio '
+    SDP += str(cHandler.rtp_puerto) + ' RTP'
+
     if (METODO == "REGISTER"):
         MENSAJE = (METODO + ' sip:' + cHandler.username + ':' +
-                   cHandler.uaserver_port + ' ' + 'SIP/2.0\r\n' + 
+                   cHandler.uaserver_puerto + ' ' + 'SIP/2.0\r\n' +
                    'Expires: ' + OPCION)
         print "Enviando: " + MENSAJE
         my_socket.send(MENSAJE + '\r\n')
-		#meter "starting" en log
-		inicio = 'Starting...'
-		MeterLog(inicio)
-    elif (METODO == "INVITE"):      
-        SDP = 'Content-Type: application/sdp\r\n\r\n' + 'v=0' + '\n'
-        SDP += 'o=' + str(cHandler.username) + ' '
-        SDP += str(cHandler.uaserver_ip)
-        SDP += '\n' + 's=misesion\n' + 't=0\n' + 'm=audio '
-        SDP += str(cHandler.rtp_puerto) + ' RTP'
+    elif (METODO == "INVITE"):
         MENSAJE = METODO + ' sip:' + OPCION + ' SIP/2.0\r\n' + SDP
         print "Enviando: " + MENSAJE
         my_socket.send(MENSAJE + '\r\n')
     elif (METODO == "BYE"):
         MENSAJE = METODO + ' sip:' + OPCION + ' SIP/2.0\r\n'
         print "Enviando: " + MENSAJE
-        my_socket.send(MENSAJE + '\r\n')    
-    else:       
+        my_socket.send(MENSAJE + '\r\n')
+    else:
         MENSAJE = METODO + 'sip:' + OPCION + ' SIP/2.0\r\n'
         print "Enviando: " + MENSAJE
         my_socket.send(MENSAJE + '\r\n')
@@ -121,17 +119,17 @@ if __name__ == "__main__":
         error = ('Error: no server listening at ' + IP_PORT)
         MeterLog(error)
         sys.exit()
-    #meter recepcion en log  
+    #meter recepcion en log
     recepcion = 'Received from ' + IP_PORT + ':' + data + '\r\n'
-    EscribirEnLog(recepcion) 
-    
+    MeterLog(recepcion)
     if (data == ("SIP/2.0 200 OK\r\n\r\n")):
         print 'Recibida respuesta REGISTER-- \r\n\r\n', data
-    
-    data = data.split()
-    server_ip = data[13]
-    server_port = data[17]
-    elif (data[2] == "Trying" + data[5] == "Ringing" + data[8] == "OK"):
+    elif (data == ("SIP/2.0 100 Trying\r\n\r\n" +
+                   "SIP/2.0 180 Ringing\r\n\r\n" + "SIP/2.0 200 OK\r\n\r\n" +
+                   SDP)):
+        data = data.split()
+        server_ip = data[13]
+        server_port = data[17]
         print 'Recibida respuesta INVITE-- \r\n\r\n', data
         #Se envía el ACK
         mensaje_ack = "ACK" + " sip:" + OPCION + " SIP/2.0\r\n"
@@ -139,15 +137,15 @@ if __name__ == "__main__":
         #meter envío en log
         envio = 'Send to: ' + IP_PORT + ':' + mensaje_ack + '\r\n'
         MeterLog(envio)
-        #enviamos audio(RTP)  
+        #enviamos audio(RTP)
         reproducir = ('mp32rtp -i ' + server_ip + ' -p ' + server_port +
                       ' < ' + cHandler.audio)
         print "Listening... ", reproducir
         os.system(reproducir)
-        print "Se ha terminado de reproducir"  
-		#meter audio en log
-		audio = ('Listening...\r\n' + 'Se ha terminado de reproducir')
-		MeterLog(audio)   
+        print "Se ha terminado de reproducir"
+        #meter audio en log
+        audio = ('Listening...\r\n' + 'Se ha terminado de reproducir')
+        MeterLog(audio)
 
     if (METODO == "BYE"):
         print 'Recibida respuesta BYE-- \r\n\r\n', data
