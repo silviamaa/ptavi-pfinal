@@ -12,7 +12,8 @@ import time
 from xml.sax import make_parser
 from xml.sax.handler import ContentHandler
 
-def AñadirLog(evento):
+
+def MeterLog(evento):
     fichero = open(cHandler.log, 'a')
     mensaje = str(time.time()) + " " + evento + '\r\n'
     fichero.write(mensaje)
@@ -58,10 +59,9 @@ class ServerHandler(ContentHandler):
         elif name == 'audio':
             self.audio = attrs.get('path', "")
 
-
     def handle(self):
         client_ip = str(self.client_address[0])
-        client_port = str(self.client_address[0])
+        client_port = str(self.client_address[1])
         IP_PORT = (client_ip) + ':' + (client_port)
         while 1:
             # Leyendo línea a línea lo que nos envía el cliente(desde el proxy)
@@ -84,9 +84,9 @@ class ServerHandler(ContentHandler):
                 SDP += '\n' + 's=misesion\n' + 't=0\n' + 'm=audio '
                 SDP += str(cHandler.rtp_port) + ' RTP'
                 self.wfile.write(MENSAJE + SDP)
-                #meter envio en log 
+                #meter envio en log
                 envio = ("Send to " + IP_PORT + ':' + MENSAJE + SDP)
-                MeterLog(envio)           
+                MeterLog(envio)
             elif (line1[0] == "ACK"):
                 #enviamos audio
                 reproducir = ('./mp32rtp -i ' + ip + ' -p ' +
@@ -101,24 +101,24 @@ class ServerHandler(ContentHandler):
                 self.wfile.write("SIP/2.0 200 OK\r\n\r\n")
                 #meter envio en log
                 envio = ("Send to " + IP_PORT + ':' + "SIP/2.0 200 OK\r\n\r\n")
-                MeterLog(envio)   
+                MeterLog(envio)
             elif len(line1) != ("INVITE" or "ACK" or "BYE"):
                 print "SIP/2.0 405 Method Not Allowed"
                 #meter error en log
                 error = ("Send to " + IP_PORT + ':' +
                          "SIP/2.0 405 Method Not Allowed")
-                MeterLog(error) 
+                MeterLog(error)
             else:
                 print "SIP/2.0 400 Bad Request"
                 #meter error en log
                 error = ("Send to " + IP_PORT + "SIP/2.0 400 Bad Request")
-                MeterLog(error) 
+                MeterLog(error)
 
 if __name__ == "__main__":
     # Creamos servidor y escuchamos
     # Parser
     parser = make_parser()
-    cHandler = ClientHandler()
+    cHandler = ServerHandler()
     parser.setContentHandler(cHandler)
     parser.parse(open(str(sys.argv[1])))
 
@@ -129,7 +129,12 @@ if __name__ == "__main__":
         MeterLog(error)
 
     serv = SocketServer.UDPServer((cHandler.uaserver_ip,
-                                   int(cHandler.uaserver_port)), EchoHandler)
+                                   int(cHandler.uaserver_puerto)),
+                                  ServerHandler)
+
+    #meter "starting" en log
+    inicio = 'Starting...'
+    MeterLog(inicio)
     print "Listening..."
     MeterLog('Listening...')
     serv.serve_forever()
