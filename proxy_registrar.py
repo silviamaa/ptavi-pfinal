@@ -91,7 +91,7 @@ class Handler(SocketServer.DatagramRequestHandler):
                     MeterLog(envio)
 
             else:
-                #busco si el usuario existe y envío el mensaje, si no, envío
+                #busco si el usuario existe y envío el mensaje, si no, "envío"
                 #"404 user not found"
                 user = str(line3[1])
                 if user in dicc_usuario:
